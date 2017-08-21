@@ -16,7 +16,12 @@ import javax.ws.rs.ext.Provider;
 @Provider
 @Priority(Priorities.AUTHENTICATION)
 public class AuthenticationFilter implements ContainerRequestFilter {
-
+	final Authorization auth;
+	
+	public AuthenticationFilter() {
+		auth = new Authorization(new AuthorizationService());
+	}
+	
 	@Override
 	public void filter(ContainerRequestContext requestContext) throws IOException {
 
@@ -38,8 +43,12 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 			requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).build());
 		}
 
+		if(!auth.authorizeUser(usuario.funcional, requestContext.getUriInfo().getPath())) {
+			requestContext.abortWith(Response.status(Response.Status.FORBIDDEN).build());
+		}
+		
 		System.out.println(requestContext.getUriInfo().getPath());
-
+		
 		SecurityContext secContext = new SecurityContextOauth(requestContext.getSecurityContext(), usuario);
 
 		requestContext.setSecurityContext(secContext);
@@ -48,9 +57,11 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 
 	private UsuarioAutenticado validateToken(String token) {
 		if (token.equals("abc"))
-			return new UsuarioAutenticado("Marcelo", "0001");
-		else if (token.equals("def"))
-			return new UsuarioAutenticado("Usuario2", "0002");
+			return new UsuarioAutenticado("Marcelo", "ABC");
+		else if (token.equals("a"))
+			return new UsuarioAutenticado("Usuario2", "A");
+		else if (token.equals("ab"))
+			return new UsuarioAutenticado("Usuario3", "AB");
 		else
 			return null;
 	}
